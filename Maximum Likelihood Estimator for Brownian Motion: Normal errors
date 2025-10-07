@@ -1,0 +1,37 @@
+def neg_loglik_normal(params, data, dt):
+    """
+    Negative log-likelihood for normal homoskedastic errors
+    Δln S_t = μ Δt + σ sqrt(Δt) ε_t, ε_t ~ N(0,1)
+    """
+    mu, sigma = params
+    if sigma <= 0:
+        return 1e12  # forbid negative volatility
+    
+    resid = data - mu*dt
+    ll = 0.5 * np.sum(np.log(2*np.pi) + np.log(sigma**2 * dt) + resid**2 / (sigma**2 * dt))
+    return ll
+
+def fit_normal_mle(log_returns, dt=1/12):
+    """
+    log_returns : 1D array-like of Δ ln S_t
+    dt : time step (default monthly = 1/12)
+    """
+    data = np.asarray(log_returns).astype(float)
+    data = data[~np.isnan(data)]
+    
+    mu0 = np.mean(data)/dt
+    sigma0 = np.std(data)/np.sqrt(dt)
+    
+    res = minimize(lambda x: neg_loglik_normal(x, data, dt),
+                   x0=[mu0, sigma0],
+                   bounds=[(None,None), (1e-12,None)],
+                   method="L-BFGS-B")
+    
+    return {
+        "mu": res.x[0],
+        "sigma": res.x[1],
+        "neg_loglik": res.fun,
+        "success": res.success,
+        "message": res.message,
+        "optim_result": res
+    }
