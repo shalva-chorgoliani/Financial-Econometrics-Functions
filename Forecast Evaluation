@@ -1,0 +1,30 @@
+def forecast_evaluation(forecasts:np.array, trues:np.array, criterion:str):
+    """
+    Calculates the forecasting error regarding different evaluation criteria
+
+    Parameters
+    ----------
+    forecasts : np.array
+        forecast series.
+    
+    trues : np.array
+        time series of true values.
+
+    Returns
+    -------
+    fe : float
+        forecast error of given forecast series.
+
+    """
+    errors = forecasts - trues
+    if criterion == "RMSPE":
+        fe = np.sqrt(np.mean(errors**2, axis = 0))
+    elif criterion == "MAPE":
+        fe = np.mean(np.abs(errors), axis = 0)
+    elif criterion == "MDAPE":
+        fe = np.median(np.abs(errors), axis = 0)
+    else:
+        print("Error! Unknown forecast evaluation criterion.")
+        return None
+
+    return fe
