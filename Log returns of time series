@@ -1,0 +1,17 @@
+def log_return(data:np.array):
+    """
+    Calculates log-returns for a given price series
+
+    Parameters
+    ----------
+    data : np.array
+        simple returns.
+
+    Returns
+    -------
+    log_ret : np.array
+        corresponding log-returns.
+
+    """
+    returns = np.log(data[1:,:]) - np.log(data[:-1,:])
+    return returns
