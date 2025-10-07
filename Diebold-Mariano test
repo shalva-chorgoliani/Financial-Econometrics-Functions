@@ -1,0 +1,31 @@
+def DM(error1:np.array, error2:np.array, lossfct):
+    """
+    Calculation of the test-statistic and p-value of the
+    Diebold-Mariano test.
+
+    Parameters
+    ----------
+    error1 : np.array
+        forecast errors model A.
+    error2 : np.array
+        forecast errors model B.
+    lossfct : TYPE
+        used loss function.
+
+    Returns
+    -------
+    S : TYPE
+        test-statistic.
+    p_value : TYPE
+        p-value.
+
+    """
+    T = len(error1)
+    loss_diff = lossfct(error1) - lossfct(error2)
+    d_bar = np.mean(loss_diff)
+    w = 1/T * np.var(loss_diff)
+    S = d_bar/np.sqrt(w)
+    p_value = 2 * (1 - stats.norm.cdf(np.abs(S), loc = 0, scale = 1))
+    return np.array([S, p_value])
+
+import numpy as np
