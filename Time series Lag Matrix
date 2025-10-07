@@ -1,0 +1,53 @@
+def newlagmatrix(x, nlags, *options):
+# Construction of a matrix of lags (X) and a vector (Y) for use in an autoregression  
+# USAGE:
+#     [Y,X]=newlagmatrix(X,NLAGS,C)
+#
+# INPUTS:
+#     X     - The dependant variable(Tx1)
+#     NLAGS - The number of lags(scalar)
+#     C     - [OPTIONAL] 1 if you want to include a constant; 0 is default
+#
+# OUTPUTS:
+#     Y     - (n-p) by 1 vector of contemporaneous values
+#     X     - (n-p) by p (or p+1 if c=1) matrix of lags and possibly constant.  The
+#               matrix is of the form [constant(if included) t-1 t-2 ... t-p]
+
+    options = list(options)
+    
+    if len(options) == 0:
+        c = 0
+    elif len(options) == 1:
+        c = options[0]
+    else:
+        return print('newlagmatrix requires either 2 or 3 arguments.')    
+    if (len(np.shape(x)) > 1 and np.shape(x)[1] >1) or len(np.shape(x)) == 0 or len(x) ==1:
+        return print ('x series must be a column vector.')
+    elif len(x) <1:
+        return print('x is empty.')
+    else:
+        if c !=1 and c!=0:
+            return print('c should be 1 or 0')
+        else:
+            if len(np.shape(nlags)) > 1 or np.size(nlags) != 1 or nlags < 0 or np.floor(nlags) != nlags:
+                return print('nlags should be non-negative integer.')
+    
+    T = np.size(x,0)
+    if nlags > 0:
+        nlags +=1
+        newX = np.concatenate((x,np.zeros((nlags,1),dtype = int))) 
+        lagmatrix = np.tile(newX,(nlags,1)) #repeat the newX array by nlags times
+        lagmatrix = np.reshape(lagmatrix[:-nlags], (T+nlags-1, nlags), order='F')
+        lagmatrix = lagmatrix[nlags-1:T]
+        y = lagmatrix[:,0]
+        x = lagmatrix[:,1:]
+        if c ==1:
+            x = np.c_[np.ones(len(x), dtype = int),x]
+    else:
+        if c == 1:
+            y = x
+            x = np.ones(T, dtype = int)
+        else:
+            y = x
+            x = []
+    return y,x
