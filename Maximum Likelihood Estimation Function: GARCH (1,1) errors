@@ -1,0 +1,71 @@
+def neg_loglik(params, data, dt):
+    # params = [mu, omega, p, q]
+    mu, omega, p, q = params
+    n = len(data)
+    if omega <= 0 or p < 0 or q < 0 or p >= 1 or q >= 1:
+        return 1e12  # forbid invalid params
+
+    # initialize sigma2 (use sample var as starting point)
+    sigma2 = np.empty(n)
+    sample_var = np.nanvar(data)  # variance of log-returns
+    sigma2[0] = max(sample_var / dt, 1e-8)
+
+    ll = 0.0
+    for t in range(n):
+        if t > 0:
+            # use recursion: sigma_t^2 = omega + p sigma_{t-1}^2 + q * ((Δr_{t-1}-mu dt)^2)/dt
+            resid_prev = data[t-1] - mu*dt
+            sigma2[t] = omega + p * sigma2[t-1] + q * (resid_prev**2) / dt
+            # numerical safeguard
+            if sigma2[t] <= 0 or not np.isfinite(sigma2[t]):
+                return 1e12
+        # compute contribution of time t
+        resid = data[t] - mu*dt
+        denom = sigma2[t] * dt
+        if denom <= 0 or not np.isfinite(denom):
+            return 1e12
+        ll += 0.5 * (np.log(2*np.pi) + np.log(denom) + (resid**2) / denom)
+
+    return ll  # this is the negative log-likelihood
+
+def fit_garch_mle(log_returns, dt=1/12, start_params=None):
+    """
+    log_returns : 1D array-like of Δ ln S_t (monthly log returns)
+    dt : time step (default monthly = 1/12)
+    returns: dict with estimated params and optimizer result
+    """
+    data = np.asarray(log_returns).astype(float)
+    data = data[~np.isnan(data)]
+    n = len(data)
+    if n < 10:
+        raise ValueError("Need more observations")
+
+    # starting guesses
+    mu0 = np.mean(data) / dt
+    var0 = np.var(data)
+    omega0 = 0.01 * var0  # small portion of variance
+    p0, q0 = 0.85, 0.1
+
+    if start_params is None:
+        x0 = np.array([mu0, omega0, p0, q0])
+    else:
+        x0 = np.array(start_params)
+
+    # bounds: mu unbounded, omega>1e-12, p,q in [0,0.999]
+    bnds = [(None, None), (1e-12, None), (0.0, 0.999), (0.0, 0.999)]
+
+    res = minimize(lambda x: neg_loglik(x, data, dt),
+                   x0, method="L-BFGS-B", bounds=bnds,
+                   options={"disp": False, "maxiter": 10000})
+
+    est = res.x
+    return {
+        "mu": est[0],
+        "omega": est[1],
+        "p": est[2],
+        "q": est[3],
+        "neg_loglik": float(res.fun),
+        "success": res.success,
+        "message": res.message,
+        "optim_result": res
+    }
