@@ -1,0 +1,21 @@
+def d_stats(data:np.array):
+    """
+    Calculates the descriptive statistics of a given data series
+
+    Parameters
+    ----------
+    data : np.array
+        data series
+
+    Returns
+    -------
+    dsts : np.array
+        some descriptive statistics of given data series
+
+    """
+    mean = np.mean(data, axis = 0)
+    std = np.std(data, axis = 0)
+    skewness = stats.skew(data, axis = 0)
+    kurt = stats.kurtosis(data, fisher = False, axis = 0)
+    dsts = np.stack([mean, std, skewness, kurt])
+    return dsts   
