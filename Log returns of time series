@@ -13,5 +13,7 @@ def log_return(data:np.array):
         corresponding log-returns.
 
     """
-    returns = np.log(data[1:,:]) - np.log(data[:-1,:])
+    arr = data.values
+    returns = np.log(arr[1:]) - np.log(arr[:-1])
+
     return returns
