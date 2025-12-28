@@ -5,7 +5,7 @@ def log_return(data:np.array):
     Parameters
     ----------
     data : np.array
-        simple returns.
+        simple prices.
 
     Returns
     -------
